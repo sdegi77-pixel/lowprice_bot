@@ -35,3 +35,13 @@ python lowprice_bot.py
 ```bash
 python test_lowprice_bot.py
 ```
+
+## GitHub Actions 자동 실행
+- **스케줄**: 매일 한국 시간(KST) 오전 9:00 (`cron: '0 0 * * *'`)
+- **Job 이름**: `run-bot`
+- **수동 실행**: GitHub 저장소의 `Actions` 탭 -> `Daily Lowprice Bot` -> `Run workflow` 버튼으로 즉시 실행 가능
+- **필요 시크릿 (Repository Secrets)**:
+  - `KAKAO_REST_API_KEY`: 카카오 REST API 키
+  - `KAKAO_CLIENT_SECRET`: 카카오 Client Secret
+  - `KAKAO_REFRESH_TOKEN`: 카카오 리프레시 토큰
+

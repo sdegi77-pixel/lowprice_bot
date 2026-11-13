@@ -1,0 +1,39 @@
+name: Daily Lowprice Bot
+
+on:
+  schedule:
+    # 한국 시간(KST = UTC+9) 매일 오전 09:00 -> UTC 00:00
+    - cron: '0 0 * * *'
+  workflow_dispatch: # 깃허브 Actions 탭에서 수동으로 즉시 실행 가능
+
+jobs:
+  run-bot:
+    name: run-bot
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Create .env file from Secrets
+        run: |
+          touch .env
+          echo "KAKAO_REST_API_KEY=${{ secrets.KAKAO_REST_API_KEY }}" >> .env
+          echo "KAKAO_CLIENT_SECRET=${{ secrets.KAKAO_CLIENT_SECRET || secrets.KAKAO_CLIENT_SECREN }}" >> .env
+          echo "KAKAO_CLIENT_SECREN=${{ secrets.KAKAO_CLIENT_SECREN || secrets.KAKAO_CLIENT_SECRET }}" >> .env
+          echo "KAKAO_REFRESH_TOKEN=${{ secrets.KAKAO_REFRESH_TOKEN || secrets.KADKO_REFRESH_TOKEN }}" >> .env
+          echo "KADKO_ REFRESH_TOKEN=${{ secrets.KAKAO_REFRESH_TOKEN || secrets.KADKO_REFRESH_TOKEN }}" >> .env
+
+      - name: Run lowprice bot
+        env:
+          KAKAO_REST_API_KEY: ${{ secrets.KAKAO_REST_API_KEY }}
+          KAKAO_CLIENT_SECRET: ${{ secrets.KAKAO_CLIENT_SECRET || secrets.KAKAO_CLIENT_SECREN }}
+          KAKAO_CLIENT_SECREN: ${{ secrets.KAKAO_CLIENT_SECREN || secrets.KAKAO_CLIENT_SECRET }}
+          KAKAO_REFRESH_TOKEN: ${{ secrets.KAKAO_REFRESH_TOKEN || secrets.KADKO_REFRESH_TOKEN }}
+          KADKO_ REFRESH_TOKEN: ${{ secrets.KAKAO_REFRESH_TOKEN || secrets.KADKO_REFRESH_TOKEN }}
+        run: python lowprice_bot.py

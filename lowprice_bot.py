@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import html
 import json
+import os
 import pathlib
 import re
 import sys
@@ -423,22 +424,37 @@ def format_output(items: List[Dict[str, Any]]) -> str:
 # ---------------------------------------------------------------------------
 
 def load_kakao_config(env_path: Optional[pathlib.Path] = None) -> Dict[str, str]:
-    """프로젝트 폴더의 .env 파일에서 카카오 OAuth 설정값을 읽어옵니다."""
-    target = env_path or ENV_PATH
-    if not target.exists():
-        raise BotFetchError(f".env 파일({target})을 찾을 수 없습니다.")
-
+    """프로젝트 폴더의 .env 파일 또는 시스템 환경 변수에서 카카오 OAuth 설정값을 읽어옵니다."""
     config: Dict[str, str] = {}
-    for line in target.read_text(encoding="utf-8").splitlines():
-        line = line.strip()
-        if not line or line.startswith("#") or "=" not in line:
-            continue
-        k, v = line.split("=", 1)
-        config[k.strip()] = v.strip().strip('"').strip("'")
+    target = env_path or ENV_PATH
+    if target.exists():
+        for line in target.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            k, v = line.split("=", 1)
+            config[k.strip()] = v.strip().strip('"').strip("'")
+
+    # os.environ 환경 변수 지원 (GitHub Actions Secrets 등)
+    for env_key in (
+        "KAKAO_REST_API_KEY",
+        "KAKAO_CLIENT_SECRET",
+        "KAKAO_CLIENT_SECREN",
+        "KAKAO_REFRESH_TOKEN",
+        "KADKO_ REFRESH_TOKEN",
+        "KADKO_REFRESH_TOKEN",
+    ):
+        val = os.environ.get(env_key)
+        if val:
+            config[env_key] = val.strip()
 
     client_id = config.get("KAKAO_REST_API_KEY", "")
     client_secret = config.get("KAKAO_CLIENT_SECRET") or config.get("KAKAO_CLIENT_SECREN", "")
-    refresh_token = config.get("KAKAO_REFRESH_TOKEN") or config.get("KADKO_ REFRESH_TOKEN", "")
+    refresh_token = (
+        config.get("KAKAO_REFRESH_TOKEN")
+        or config.get("KADKO_ REFRESH_TOKEN")
+        or config.get("KADKO_REFRESH_TOKEN", "")
+    )
 
     missing = []
     if not client_id:
@@ -447,7 +463,8 @@ def load_kakao_config(env_path: Optional[pathlib.Path] = None) -> Dict[str, str]
         missing.append("KAKAO_REFRESH_TOKEN (또는 KADKO_ REFRESH_TOKEN)")
 
     if missing:
-        raise BotFetchError(f".env 파일에 필수 카카오 인증 정보가 누락되었습니다: {', '.join(missing)}")
+        source_desc = f".env 파일({target})" if target.exists() else "환경 변수 및 .env 파일"
+        raise BotFetchError(f"{source_desc}에 필수 카카오 인증 정보가 누락되었습니다: {', '.join(missing)}")
 
     return {
         "client_id": client_id,
